@@ -1,0 +1,50 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: orders-backend
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/<your-username>/<your-repo>.git
+    targetRevision: main
+    path: infra/helm/orders-service
+    helm:
+      values: |
+        image:
+          repository: localhost:5500/orders-service
+          tag: "dev"   # bump this (or values.yaml) when you build a new image
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: orders
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: orders-frontend
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/<your-username>/<your-repo>.git
+    targetRevision: main
+    path: infra/helm/frontend
+    helm:
+      values: |
+        image:
+          repository: localhost:5500/orders-frontend
+          tag: "dev"
+        ingress:
+          enabled: true
+          host: orders.local
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: orders
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
